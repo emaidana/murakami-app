@@ -310,8 +310,10 @@ const getDailyReflection = () => {
 };
 
 const MurakamiDaily = () => {
+  const [page, setPage] = useState('cover'); // 'cover' | 'transitioning' | 'content'
+  const [coverVisible, setCoverVisible] = useState(false);
+  const [contentVisible, setContentVisible] = useState(false);
   const [currentReflection, setCurrentReflection] = useState(null);
-  const [visible, setVisible] = useState(false);
   const [journalText, setJournalText] = useState('');
 
   useEffect(() => {
@@ -319,9 +321,21 @@ const MurakamiDaily = () => {
     const saved = localStorage.getItem(`murakami-journal-${getDateKey()}`);
     if (saved) setJournalText(saved);
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => setVisible(true));
+      requestAnimationFrame(() => setCoverVisible(true));
     });
   }, []);
+
+  const handleEnter = useCallback(() => {
+    if (page !== 'cover') return;
+    setCoverVisible(false);
+    setPage('transitioning');
+    setTimeout(() => {
+      setPage('content');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setContentVisible(true));
+      });
+    }, 800);
+  }, [page]);
 
   const handleJournalChange = useCallback((e) => {
     const value = e.target.value;
@@ -334,7 +348,7 @@ const MurakamiDaily = () => {
   }, []);
 
   const handleTurnPage = useCallback(() => {
-    setVisible(false);
+    setContentVisible(false);
     setTimeout(() => {
       let next;
       do {
@@ -342,20 +356,71 @@ const MurakamiDaily = () => {
       } while (next.theme === currentReflection?.theme && reflections.length > 1);
       setCurrentReflection(next);
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => setVisible(true));
+        requestAnimationFrame(() => setContentVisible(true));
       });
     }, 600);
   }, [currentReflection]);
 
   if (!currentReflection) return null;
 
+  // — Cover page —
+  if (page === 'cover' || page === 'transitioning') {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center cursor-pointer"
+        style={{ backgroundColor: '#FAF9F7' }}
+        onClick={handleEnter}
+      >
+        <div
+          className="text-center"
+          style={{
+            opacity: coverVisible ? 1 : 0,
+            transition: 'opacity 800ms ease-out',
+          }}
+        >
+          <p className="font-sans text-[11px] tracking-[0.2em] uppercase mb-3"
+             style={{ color: '#9a9a9a', fontWeight: 300 }}>
+            Daily Murakami
+          </p>
+          <p className="font-sans text-[13px] tracking-[0.02em] mb-16"
+             style={{ color: '#c8c8c8', fontWeight: 300 }}>
+            A small piece of magic for your day
+          </p>
+          <button
+            className="font-sans text-[11px] tracking-[0.15em] cursor-pointer"
+            style={{
+              color: '#9a9a9a',
+              fontWeight: 300,
+              background: 'none',
+              border: 'none',
+              borderBottom: '1px solid #c8c8c8',
+              padding: 0,
+              paddingBottom: '2px',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.color = '#1a1a1a';
+              e.currentTarget.style.borderBottomColor = '#1a1a1a';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.color = '#9a9a9a';
+              e.currentTarget.style.borderBottomColor = '#c8c8c8';
+            }}
+          >
+            Turn to today
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // — Content page —
   return (
     <div className="min-h-screen flex flex-col items-center px-8 py-16 sm:px-6 sm:py-20"
          style={{ backgroundColor: '#FAF9F7' }}>
       <div
         className="w-full max-w-[560px] flex-1 flex flex-col"
         style={{
-          opacity: visible ? 1 : 0,
+          opacity: contentVisible ? 1 : 0,
           transition: 'opacity 800ms ease-out',
         }}
       >
