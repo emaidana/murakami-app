@@ -26,3 +26,9 @@ body {
 ::selection {
   background-color: #f0e6e0;
 }
+
+textarea::placeholder {
+  color: #c8c8c8;
+  font-style: italic;
+  opacity: 1;
+}

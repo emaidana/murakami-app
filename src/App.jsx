@@ -81,15 +81,33 @@ const getDailyReflection = () => {
   return reflections[dayOfYear % reflections.length];
 };
 
+const getDateKey = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
 const MurakamiDaily = () => {
   const [currentReflection, setCurrentReflection] = useState(null);
   const [visible, setVisible] = useState(false);
+  const [journalText, setJournalText] = useState('');
 
   useEffect(() => {
     setCurrentReflection(getDailyReflection());
+    const saved = localStorage.getItem(`murakami-journal-${getDateKey()}`);
+    if (saved) setJournalText(saved);
     requestAnimationFrame(() => {
       requestAnimationFrame(() => setVisible(true));
     });
+  }, []);
+
+  const handleJournalChange = useCallback((e) => {
+    const value = e.target.value;
+    setJournalText(value);
+    if (value) {
+      localStorage.setItem(`murakami-journal-${getDateKey()}`, value);
+    } else {
+      localStorage.removeItem(`murakami-journal-${getDateKey()}`);
+    }
   }, []);
 
   const handleTurnPage = useCallback(() => {
@@ -169,6 +187,30 @@ const MurakamiDaily = () => {
           >
             {currentReflection.lifeApplication}
           </p>
+        </section>
+
+        {/* Journal — a thought to keep */}
+        <section className="mb-16 sm:mb-20">
+          <p className="font-sans text-[10px] tracking-[0.2em] uppercase mb-4"
+             style={{ color: '#9a9a9a', fontWeight: 300 }}>
+            A thought to keep
+          </p>
+          <textarea
+            value={journalText}
+            onChange={handleJournalChange}
+            placeholder="..."
+            rows={4}
+            className="w-full font-sans text-base leading-relaxed resize-none outline-none"
+            style={{
+              color: '#1a1a1a',
+              fontWeight: 300,
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderBottom: '1px solid #e8e6e3',
+              paddingBottom: '12px',
+              caretColor: '#9a9a9a',
+            }}
+          />
         </section>
 
         {/* Dedication + book reference */}
